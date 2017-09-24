@@ -152,30 +152,14 @@ const float s_300_table[] =
 //}
 
 //************************线性回归计算和显示函数*********************// 
-//FLUKE 5502A校准电流，最小55uA，再小不准，且输出线上损耗没有补偿∈实际应用中存在长线传输而导致电流损耗。 Y = -20.77718 + 0.32010*X1  
-//double data1[12][2] = {
-////    X      Y
-//    {163 , 5},//5uA
-//    {166, 10},//10
-//    {172, 20},//20
-//    {180, 40},//40
-//    {246, 80},//80
-//    {325, 100},//100
-//    {494, 150},//150
-//    {656, 200},//200
-//    {979, 300},//300
-//    {1630, 500},//500
-//    {2279, 700},//700
-//    {2932, 900},//900
-////    {3582, 1100},//1100
-////    {3503, 1300},//1300
-////    {3772, 1400},//1400
-////    {4042, 1500},//1500
-//};
-//FLUKE 5502A校准电流，最小55uA，再小不准，且输出线上损耗没有补偿∈实际应用中存在长线传输而导致电流损耗。电路设计非线性造成
-double data1[11][2] = {
+//FLUKE 5502A校准电流，最小55uA，再小不准，由于硬件电路底噪造成，改进电路或者分档处理  Y = -20.77718 + 0.32010*X1  
+
+double data1[14][2] = {
 //    X      Y
     {163 , 60},//60uA
+    {189, 70},//70
+    {218, 80},//80
+    {248, 90},//90
     {270, 100},//100
     {542, 200},//200
     {811, 300},//300
@@ -187,39 +171,42 @@ double data1[11][2] = {
     {3772, 1400},//1400
     {4042, 1500},//1500
 };
-//S热电偶参考FLUK 5502A校准，冷端0摄氏度，线损耗，计量时需要补偿,压差不恒定，根据实际情况分析
-//级联后校准系数
-//double data2[12][2] = {
-////    X      Y
-//    {1025, 0.328},//60℃
-//    {1138, 0.390},//70
-//    {1485, 0.608},//100
-//    {1724, 0.758},//120
-//    {1978, 0.909},//140
-//    {2237, 1.068},//160
-//    {2507, 1.231},//180
-//    {2780, 1.397},//200
-//    {3344, 1.742},//240
-//    {3635, 1.924},//260
-//    {3928, 2.099},//280
-//    {4024, 2.15}//285  290饱和
-//};
-//独立校准系数，校准接入万用表有变动，所以读数必须接入万用表时读取输入和输出数据，而不能分开读取，否则有偏差
-double data2[12][2] = {
+//S热电偶参考FLUK 5502A校准,接入万用表测试有偏差，直接读取仪表参数即可。
+//级联后校准系数，偏小4摄氏度
+double data2[14][2] = {
 //    X      Y
-    {1025, 0.319},//60℃
-    {1142, 0.391},//70
-    {1490, 0.603},//100
-    {1740, 0.754},//120
-    {1989, 0.907},//140
-    {2252, 1.068},//160
-    {2524, 1.233},//180
-    {2795, 1.400},//200
-    {3360, 1.744},//240
-    {3647, 1.921},//260
-    {3946, 2.103},//280
-    {4024, 2.15}//285  290以上饱和
+    {658, 0.0024},//30  
+    {871, 0.1285},//50   
+    {978, 0.1944},//60℃
+    {1086, 0.2621},//70
+    {1430, 0.4752},//100
+    {1688, 0.6247},//120
+    {2080,0.8587},//150
+    {2222, 0.9390},//160
+    {2467, 1.1028},//180
+    {2742, 1.2703},//200
+    {3323, 1.6151},//240
+    {3620, 1.7917},//260
+    {3914, 1.9709},//280
+    {4063, 2.0613}//285  290以上饱和
 };
+//double data2[14][2] = {
+////    X      Y
+//    {870, 0.215},//50   
+//    {1228, 0.444},//80℃
+//    {1458, 0.581},//100
+//    {1795, 0.726},//120
+//    {2040, 0.936},//150
+//    {2140, 1.001},//160
+//    {2046, 1.165},//180
+//    {2687, 1.334},//200
+//    {2971, 1.508},//220 
+//    {3265, 1.683},//240
+//    {3556, 1.867},//260
+//    {3701, 1.955},//270
+//    {3841, 2.04},//280
+//    {3980, 2.125}//285  290以上饱和，偏大9，减去偏置
+//};
 double data3[14][2] = {
 //    X      Y
     {98 , 0.396},//10   ℃ 
@@ -254,6 +241,24 @@ double data4[14][2] = {
     {3943, 680},//680
     {4061, 700}//700
 };
+
+double data5[14][2] = {
+//    X      Y
+    {130 , 0},//0uA
+    {133 , 5},//5uA
+    {136 , 8},//8uA
+    {137 , 13},//13uA
+    {138, 15},//15
+    {139, 20},//20
+    {140, 25},//25
+    {141, 30},//30
+    {142, 35},//35
+    {143, 40},//40
+    {146, 45},//45
+    {150, 50},//50
+    {156, 55},//55
+    {163, 60},//60
+};
 //数据格式转换函数
 typedef union
 {
@@ -266,8 +271,9 @@ double answer_ch1[2];
 double answer_ch2[2];
 double answer_ch3[2];
 double answer_ch4[2];
+double answer_ch5[2];
 double SquarePoor[4];
-Xdata ch1_ratio,ch1_off,ch2_ratio,ch2_off,ch3_ratio,ch3_off,ch4_ratio,ch4_off;
+Xdata ch1_ratio,ch1_off,ch2_ratio,ch2_off,ch3_ratio,ch3_off,ch4_ratio,ch4_off,ch5_ratio,ch5_off;
 void display(double *dat, double *Answer, double *SquarePoor, int rows, int cols)
 {
     double v, *p;
@@ -395,11 +401,11 @@ void setup()
 //    uart1.printf("pclk1:%d\r\n",cpu.clock.pclk1);
 //    uart1.printf("pclk2:%d\r\n",cpu.clock.pclk2);
 //************线性回归计算函数****************************//  
-    linear_regression((double*)data1,11,&answer_ch1[0],&answer_ch1[1],&SquarePoor[0]);
+    linear_regression((double*)data1,14,&answer_ch1[0],&answer_ch1[1],&SquarePoor[0]);
     ch1_ratio.val = answer_ch1[1];  //双精度与CHAR转换
     ch1_off.val = answer_ch1[0];
     
-    linear_regression((double*)data2,12,&answer_ch2[0],&answer_ch2[1],&SquarePoor[0]);
+    linear_regression((double*)data2,14,&answer_ch2[0],&answer_ch2[1],&SquarePoor[0]);
     ch2_ratio.val = answer_ch2[1];//双精度与CHAR转换
     ch2_off.val = answer_ch2[0];
     
@@ -410,17 +416,23 @@ void setup()
     linear_regression((double*)data4,14,&answer_ch4[0],&answer_ch4[1],&SquarePoor[0]);
     ch4_ratio.val = answer_ch4[1];
     ch4_off.val = answer_ch4[0];
+    
+    linear_regression((double*)data5,14,&answer_ch5[0],&answer_ch5[1],&SquarePoor[0]);
+    ch5_ratio.val = answer_ch5[1];
+    ch5_off.val = answer_ch5[0];
 
 //***************数据读写FLASH操作*****************//
 
-//    flash.write(0x800E000,ch1_ratio.byte,16);
-//    flash.write(0x800E010,ch1_off.byte,16);    
-//    flash.write(0x800E020,ch2_ratio.byte,16);
-//    flash.write(0x800E030,ch2_off.byte,16);
-//    flash.write(0x800E040,ch3_ratio.byte,16);
-//    flash.write(0x800E050,ch3_off.byte,16);  
-//    flash.write(0x800E060,ch4_ratio.byte,16);
-//    flash.write(0x800E070,ch4_off.byte,16);  
+    flash.write(0x800E000,ch1_ratio.byte,16);
+    flash.write(0x800E010,ch1_off.byte,16);    
+    flash.write(0x800E020,ch2_ratio.byte,16);
+    flash.write(0x800E030,ch2_off.byte,16);
+    flash.write(0x800E040,ch3_ratio.byte,16);
+    flash.write(0x800E050,ch3_off.byte,16);  
+    flash.write(0x800E060,ch4_ratio.byte,16);
+    flash.write(0x800E070,ch4_off.byte,16);  
+    flash.write(0x800E080,ch5_ratio.byte,16);
+    flash.write(0x800E090,ch5_off.byte,16);  
 
     flash.read(0x800E000,ch1_ratio.byte,16);//Y = -0.30744 + 0.00061*X1     
     flash.read(0x800E010,ch1_off.byte,16);   
@@ -430,11 +442,14 @@ void setup()
     flash.read(0x800E050,ch3_off.byte,16);
     flash.read(0x800E060,ch4_ratio.byte,16);//Y = -0.38432 + 0.17249*X1
     flash.read(0x800E070,ch4_off.byte,16);
+    flash.read(0x800E080,ch5_ratio.byte,16);// Y = -264.12479 + 2.05554*X1   电流测试的低电流函数
+    flash.read(0x800E090,ch5_off.byte,16);
 //*************输出线性计算函数************************************************//
 //    display((double*)data1,answer_ch1,&SquarePoor[0],12,2);
 //    display((double*)data2,answer_ch2,&SquarePoor[0],12,2);
 //    display((double*)data3,answer_ch3,&SquarePoor[0],14,2);
 //    display((double*)data4,answer_ch4,&SquarePoor[0],14,2);
+//    display((double*)data5,answer_ch5,&SquarePoor[0],14,2);
 //    while(1);
 }
 
@@ -452,8 +467,8 @@ int main(void)
             adc_read_ch(i);
         }
 //**************计算还原系数******************//       
-        detector_urrent_ch1 = voltage_ch1/2/0.823;//825欧姆采样电阻，1.98为运放放大倍数，单位uA，酸露漏电流,具体情况需要校准，实际测试A=2，电阻R4=823
-        detector_temperature_ch2 = voltage_ch2/1020;//运放放大倍数1020，根据实际情况调整，酸露传感器温度S热电偶,单位//mv，需要制表查询计算       
+        detector_urrent_ch1 = voltage_ch1;///2/0.823;//825欧姆采样电阻，1.98为运放放大倍数，单位uA，酸露漏电流,具体情况需要校准，实际测试A=2，电阻R4=823
+        detector_temperature_ch2 = voltage_ch2;///1020;//运放放大倍数1020，根据实际情况调整，酸露传感器温度S热电偶,单位//mv，需要制表查询计算       
         flue_temperature_ch3 = (voltage_ch3-19)/101;//运放放大倍数101,烟气温度K热电偶,单位//mv，需要制表查询计算，减去零点偏置19mV,偏置可以通过
                                                         //输入0电压获得，101由A=1+R25/R37，实际情况需要校准零点偏置和K系数。
         ambient_temperature_ch4 = voltage_ch4/3.56/10;//运放放大倍数3.56,环境温度检测LM35，10mV/℃，单位℃，需要零点补偿校准
@@ -461,8 +476,20 @@ int main(void)
 //        detector_urrent_ch1 = voltage_ch1;//
 //        detector_temperature_ch2 = voltage_ch2;//
 ////      flue_temperature_ch3 = voltage_ch3;//
-//        ambient_temperature_ch4 = voltage_ch4;//    
-        I_voltage_ch1 = ch1_off.val + ch1_ratio.val*val_ch1;
+//        ambient_temperature_ch4 = voltage_ch4;//  
+        if(val_ch1 >= 159 )
+        {
+            I_voltage_ch1 = ch1_off.val + ch1_ratio.val*val_ch1;
+        }
+        else if ((val_ch1 < 159)&(val_ch1 > 131))
+        {
+             I_voltage_ch1 = ch5_off.val + ch5_ratio.val*val_ch1;
+        }
+        else if (val_ch1 <= 131)
+        {
+            I_voltage_ch1=0;
+        }
+        
         S_voltage_ch2 = ch2_off.val + ch2_ratio.val*val_ch2; 
         K_voltage_ch3 = ch3_off.val + ch3_ratio.val*val_ch3;  
         LM35_voltage_ch4 = ch4_off.val + ch4_ratio.val*val_ch4;
@@ -488,14 +515,19 @@ int main(void)
 //    
 //   uart1.printf( "Output:\n%s\ncharacter count = %d\n", buffer, j );
 //**********字符串输出转换方式**测试代码********************//    
-//            uart1.printf("%04d\t%0.4f\n",val_ch4,ambient_temperature_ch4);     
-            uint8_t len = make_frame(I_voltage_ch1,S_voltage_ch2,K_voltage_ch3,LM35_voltage_ch4);
-            //uart1.write(send_buf,len);
-            uart1.printf("I_voltage_ch1 = %4.3f\t S_voltage_ch2 = %4.3f\t K_voltage_ch3 = %4.3f\t LM35_voltage_ch4 = %4.1f\r\n",I_voltage_ch1,S_voltage_ch2,K_voltage_ch3,LM35_voltage_ch4);
-           
+//            uart1.printf("%04d\t%0.4f\n",val_ch1,detector_urrent_ch1); 
+//            uart1.printf("%04d\t%0.4f\n",val_ch2,detector_temperature_ch2);               
+
+            
+//            uart1.printf("I_voltage_ch1 = %4.3f\t S_voltage_ch2 = %4.3f\t K_voltage_ch3 = %4.3f\t LM35_voltage_ch4 = %4.1f\r\n",I_voltage_ch1,S_voltage_ch2,K_voltage_ch3,LM35_voltage_ch4);
+          
            uint16_t temp1 = voltage_to_temperature(K_voltage_ch3,LM35_voltage_ch4,k_600_table);
            uint16_t temp2 = voltage_to_temperature(S_voltage_ch2,LM35_voltage_ch4,s_300_table);
+           temp2 = temp2 + 3;//修正温度校准误差
            uart1.printf("temp1:%d\r\ntemp2:%d",temp1,temp2);
+ //485发送数据方式          
+            uint8_t len = make_frame(I_voltage_ch1,temp2,temp1,LM35_voltage_ch4);
+            uart1.write(send_buf,len);
            delay_ms(10);   
             _485_rx_mode(); 
 //            uart1.receive();
