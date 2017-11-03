@@ -493,10 +493,11 @@ int main(void)
         S_voltage_ch2 = ch2_off.val + ch2_ratio.val*val_ch2; 
         K_voltage_ch3 = ch3_off.val + ch3_ratio.val*val_ch3;  
         LM35_voltage_ch4 = ch4_off.val + ch4_ratio.val*val_ch4;
-        int rx_temp;
+
+//        int rx_temp;
         
 //*********串口发送输出结果给主控单片机和接收主控单片机参数配置指令*********//
-        if(millis() - last_updata_time >= 200) //发送485更新速率时间为100ms每次
+        if(millis() - last_updata_time >= 200) //发送485更新速率时间为200ms每次
         {
             last_updata_time = millis();
           _485_tx_mode();
@@ -519,20 +520,23 @@ int main(void)
 //            uart1.printf("%04d\t%0.4f\n",val_ch2,detector_temperature_ch2);               
 
             
-//            uart1.printf("I_voltage_ch1 = %4.3f\t S_voltage_ch2 = %4.3f\t K_voltage_ch3 = %4.3f\t LM35_voltage_ch4 = %4.1f\r\n",I_voltage_ch1,S_voltage_ch2,K_voltage_ch3,LM35_voltage_ch4);
-          
+ 
+ //查表得出热电偶温度值         
            uint16_t temp1 = voltage_to_temperature(K_voltage_ch3,LM35_voltage_ch4,k_600_table);
            uint16_t temp2 = voltage_to_temperature(S_voltage_ch2,LM35_voltage_ch4,s_300_table);
            temp2 = temp2 + 3;//修正温度校准误差
+//           LM35_voltage_ch4 = LM35_voltage_ch4 /10.0;
            uart1.printf("temp1:%d\r\ntemp2:%d",temp1,temp2);
- //485发送数据方式          
-            uint8_t len = make_frame(I_voltage_ch1,temp2,temp1,LM35_voltage_ch4);
-            uart1.write(send_buf,len);
-           delay_ms(10);   
-            _485_rx_mode(); 
+ //485发送数据方式   
+ 
+           uart1.printf("I_voltage_ch1 = %4.3f\t S_voltage_ch2 = %4.3f\t K_voltage_ch3 = %4.3f\t LM35_voltage_ch4 = %4.1f\r\n",I_voltage_ch1,S_voltage_ch2,K_voltage_ch3,LM35_voltage_ch4); 
+//            uint8_t len = make_frame(I_voltage_ch1,temp2,temp1,LM35_voltage_ch4);
+//            uart1.write(send_buf,len);
+//           delay_ms(10);   
+//            _485_rx_mode(); 
 //            uart1.receive();
 //            if(rx_temp = uart1.receive())
-////             {
+////          {
 //                  
                  PA1.toggle();   //测试口 
 //                   delay_ms(100);                  
