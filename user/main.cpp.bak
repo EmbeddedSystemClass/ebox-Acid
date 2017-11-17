@@ -339,11 +339,11 @@ uint8_t make_frame(float ch1,float ch2,float ch3,float ch4)
 
 
 //////////////////////
-uint16_t voltage_to_temperature(float voltage,float ref,const float *table)
+int32_t voltage_to_temperature(float voltage,float ref,const float *table)
 {
     //k_600_table[temp] = (k_600_table[ref] + voltage)
     float temp_voltage;
-    uint16_t i,i_max;
+    int32_t i_max;
     if(table == k_600_table)
         i_max = 600; 
     else if(table == s_300_table)
@@ -351,8 +351,16 @@ uint16_t voltage_to_temperature(float voltage,float ref,const float *table)
     temp_voltage = table[round(ref/10.0)] + voltage;
     for(uint16_t i = 0; i < i_max; i++)
     {
-        if((temp_voltage > table[i]) && (temp_voltage < table[i + 1]))
-            return i;
+            if(temp_voltage < table[0]) return 0;
+
+            if((temp_voltage > table[i]) && (temp_voltage < table[i + 1]))
+                return i;
+            
+            if(temp_voltage > table[i_max]) 
+            {
+                return i_max;
+            }
+
     }
 }
 ///////////////////////////
@@ -490,7 +498,7 @@ int main(void)
             I_voltage_ch1=0;
         }
         
-        S_voltage_ch2 = ch2_off.val + ch2_ratio.val*val_ch2; 
+        S_voltage_ch2 = ch2_off.val + 0.1+ ch2_ratio.val*val_ch2; //增加100uV修正，重新校准系数时需要去除0.1
         K_voltage_ch3 = ch3_off.val + ch3_ratio.val*val_ch3;  
         LM35_voltage_ch4 = ch4_off.val + ch4_ratio.val*val_ch4;
 
@@ -522,22 +530,18 @@ int main(void)
             
  
  //查表得出热电偶温度值         
-           uint16_t temp1 = voltage_to_temperature(K_voltage_ch3,LM35_voltage_ch4,k_600_table);
-           uint16_t temp2 = voltage_to_temperature(S_voltage_ch2,LM35_voltage_ch4,s_300_table);
-           temp2 = temp2 + 3;//修正温度校准误差
+           int32_t temp1 = voltage_to_temperature(K_voltage_ch3,LM35_voltage_ch4,k_600_table);
+           int32_t temp2 = voltage_to_temperature(S_voltage_ch2,LM35_voltage_ch4,s_300_table);
+         //  temp2 = temp2 - 3 ;//修正温度校准误差
 //           LM35_voltage_ch4 = LM35_voltage_ch4 /10.0;
-           uart1.printf("temp1:%d\r\ntemp2:%d",temp1,temp2);
+//uart1.printf("temp1:%d\ttemp2:%d\tvoltage:%0.2f\r\n",temp1,temp2,S_voltage_ch2);
  //485发送数据方式   
- 
-           uart1.printf("I_voltage_ch1 = %4.3f\t S_voltage_ch2 = %4.3f\t K_voltage_ch3 = %4.3f\t LM35_voltage_ch4 = %4.1f\r\n",I_voltage_ch1,S_voltage_ch2,K_voltage_ch3,LM35_voltage_ch4); 
-//            uint8_t len = make_frame(I_voltage_ch1,temp2,temp1,LM35_voltage_ch4);
-//            uart1.write(send_buf,len);
-//           delay_ms(10);   
-//            _485_rx_mode(); 
-//            uart1.receive();
-//            if(rx_temp = uart1.receive())
-////          {
-//                  
+ //测试程序
+//           uart1.printf("I_voltage_ch1 = %4.3f\t S_voltage_ch2 = %4.3f\t K_voltage_ch3 = %4.3f\t LM35_voltage_ch4 = %4.1f\r\n",I_voltage_ch1,S_voltage_ch2,K_voltage_ch3,LM35_voltage_ch4); 
+//最终上位机485通信程序
+            uint8_t len = make_frame(I_voltage_ch1,temp2,temp1,LM35_voltage_ch4);
+            uart1.write(send_buf,len);
+//最终上位机485通信程序                 
                  PA1.toggle();   //测试口 
 //                   delay_ms(100);                  
 //             }
