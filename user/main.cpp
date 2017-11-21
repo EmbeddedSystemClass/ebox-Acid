@@ -153,7 +153,7 @@ const float s_300_table[] =
 
 //************************线性回归计算和显示函数*********************// 
 //FLUKE 5502A校准电流，最小55uA，再小不准，由于硬件电路底噪造成，改进电路或者分档处理  Y = -20.77718 + 0.32010*X1  
-
+//校准电流系数
 double data1[14][2] = {
 //    X      Y
     {163 , 60},//60uA
@@ -173,40 +173,44 @@ double data1[14][2] = {
 };
 //S热电偶参考FLUK 5502A校准,接入万用表测试有偏差，直接读取仪表参数即可。
 //级联后校准系数，偏小4摄氏度
-double data2[14][2] = {
-//    X      Y
-    {658, 0.0024},//30  
-    {871, 0.1285},//50   
-    {978, 0.1944},//60℃
-    {1086, 0.2621},//70
-    {1430, 0.4752},//100
-    {1688, 0.6247},//120
-    {2080,0.8587},//150
-    {2222, 0.9390},//160
-    {2467, 1.1028},//180
-    {2742, 1.2703},//200
-    {3323, 1.6151},//240
-    {3620, 1.7917},//260
-    {3914, 1.9709},//280
-    {4063, 2.0613}//285  290以上饱和
-};
+
 //double data2[14][2] = {
 ////    X      Y
-//    {870, 0.215},//50   
-//    {1228, 0.444},//80℃
-//    {1458, 0.581},//100
-//    {1795, 0.726},//120
-//    {2040, 0.936},//150
-//    {2140, 1.001},//160
-//    {2046, 1.165},//180
-//    {2687, 1.334},//200
-//    {2971, 1.508},//220 
-//    {3265, 1.683},//240
-//    {3556, 1.867},//260
-//    {3701, 1.955},//270
-//    {3841, 2.04},//280
-//    {3980, 2.125}//285  290以上饱和，偏大9，减去偏置
+//    {658, 0.0024},//30  
+//    {871, 0.1285},//50   
+//    {978, 0.1944},//60℃
+//    {1086, 0.2621},//70
+//    {1430, 0.4752},//100
+//    {1688, 0.6247},//120
+//    {2080,0.8587},//150
+//    {2222, 0.9390},//160
+//    {2467, 1.1028},//180
+//    {2742, 1.2703},//200
+//    {3323, 1.6151},//240
+//    {3620, 1.7917},//260
+//    {3914, 1.9709},//280
+//    {4063, 2.0613}//285  290以上饱和
 //};
+//2017.11.21重新校准S热电偶
+double data2[14][2] = {
+//    X      Y
+    {592, 0.0272},//30  
+    {798, 0.1532},//50   
+    {909, 0.2191},//60℃
+    {1019, 0.2869},//70
+    {1369, 0.4999},//100
+    {1617, 0.6495},//120
+    {2000,0.8835},//150
+    {2135,0.9638},//160
+    {2406, 1.1276},//180
+    {2684, 1.2951},//200
+    {3250, 1.6399},//240
+    {3536, 1.8165},//260
+    {3825, 1.9927},//280
+    {3900, 2.0378}//285  290以上饱和
+};
+
+//校准K热电偶
 double data3[14][2] = {
 //    X      Y
     {98 , 0.396},//10   ℃ 
@@ -224,6 +228,7 @@ double data3[14][2] = {
     {3797, 22.775},//550
     {4079, 24.487},//590  595以上饱和
 };
+//校准LM35温度
 double data4[14][2] = {
 //    X      Y
     {61 , 10.002},//10mv
@@ -241,7 +246,7 @@ double data4[14][2] = {
     {3943, 680},//680
     {4061, 700}//700
 };
-
+//电流小电流区域校准数据
 double data5[14][2] = {
 //    X      Y
     {130 , 0},//0uA
@@ -348,10 +353,13 @@ int32_t voltage_to_temperature(float voltage,float ref,const float *table)
         i_max = 600; 
     else if(table == s_300_table)
         i_max = 300;
+    
+
+    
     temp_voltage = table[round(ref/10.0)] + voltage;
     for(uint16_t i = 0; i < i_max; i++)
     {
-            if(temp_voltage < table[0]) return 0;
+            if(temp_voltage < table[round(ref/10.0)]) return (ref/10.0);//修改判断阈值
 
             if((temp_voltage > table[i]) && (temp_voltage < table[i + 1]))
                 return i;
@@ -498,7 +506,8 @@ int main(void)
             I_voltage_ch1=0;
         }
         
-        S_voltage_ch2 = ch2_off.val + 0.1+ ch2_ratio.val*val_ch2; //增加100uV修正，重新校准系数时需要去除0.1
+//        S_voltage_ch2 = ch2_off.val + 0.1+ ch2_ratio.val*val_ch2; //增加100uV修正，重新校准系数时需要去除0.1
+        S_voltage_ch2 = ch2_off.val + ch2_ratio.val*val_ch2; 
         K_voltage_ch3 = ch3_off.val + ch3_ratio.val*val_ch3;  
         LM35_voltage_ch4 = ch4_off.val + ch4_ratio.val*val_ch4;
 
@@ -511,51 +520,38 @@ int main(void)
           _485_tx_mode();
 //         uart1.printf("val_ch1 = 0x%04x\r\nval_ch2 = 0x%04x\r\nval_ch3 = 0x%04x\r\n val_ch4 = 0x%04x\r\n",val_ch1,val_ch2,val_ch3,val_ch4);
 //          uart1.printf("val_ch1 = 0x%04x\r\nval_ch2 = 0x%04x\r\nval_ch3 = 0x%04x\r\n val_ch4 = 0x%04x\r\n",I_voltage_ch1,val_ch2,val_ch3,val_ch4);
-
-//**********字符串输出转换方式**测试代码********************//          
-//   char  buffer[200], s[] = "computer", c = 'l';
-//   int   i = 35, j;
-//   float fp = 1.7320534f;      
-//   // ???????????buffer
-//   j  = sprintf( buffer,    "   String:    %s\n", s ); // C4996
-//   j += sprintf( buffer + j, "   Character: %c\n", c ); // C4996
-//   j += sprintf( buffer + j, "   Integer:   %d\n", i ); // C4996
-//   j += sprintf( buffer + j, "   Real:      %f\n", fp );// C4996
-//    
-//   uart1.printf( "Output:\n%s\ncharacter count = %d\n", buffer, j );
-//**********字符串输出转换方式**测试代码********************//    
-//            uart1.printf("%04d\t%0.4f\n",val_ch1,detector_urrent_ch1); 
-//            uart1.printf("%04d\t%0.4f\n",val_ch2,detector_temperature_ch2);               
-
-            
+  
  
  //查表得出热电偶温度值         
            int32_t temp1 = voltage_to_temperature(K_voltage_ch3,LM35_voltage_ch4,k_600_table);
            int32_t temp2 = voltage_to_temperature(S_voltage_ch2,LM35_voltage_ch4,s_300_table);
          //  temp2 = temp2 - 3 ;//修正温度校准误差
 //           LM35_voltage_ch4 = LM35_voltage_ch4 /10.0;
-//uart1.printf("temp1:%d\ttemp2:%d\tvoltage:%0.2f\r\n",temp1,temp2,S_voltage_ch2);
+//uart1.printf("temp1:%d\ttemp2:%d\tvoltage:%0.2f\r\n",temp1,temp2,K_voltage_ch3);
  //485发送数据方式   
  //测试程序
 //           uart1.printf("I_voltage_ch1 = %4.3f\t S_voltage_ch2 = %4.3f\t K_voltage_ch3 = %4.3f\t LM35_voltage_ch4 = %4.1f\r\n",I_voltage_ch1,S_voltage_ch2,K_voltage_ch3,LM35_voltage_ch4); 
-//最终上位机485通信程序
+
+//**************最终上位机485通信程序**********************************
             uint8_t len = make_frame(I_voltage_ch1,temp2,temp1,LM35_voltage_ch4);
             uart1.write(send_buf,len);
-//最终上位机485通信程序                 
+//*******************最终上位机485通信程序  ********************************************               
                  PA1.toggle();   //测试口 
-//                   delay_ms(100);                  
-//             }
+
                  
-//            _485_tx_mode(); 
-//            uart1.printf("%04d\t%0.4f\t%0.4f\r\n",val_ch2,S_voltage_ch2,K_voltage_ch3);     
+//**************校准使用输出字符串，用于校准S等热电偶参数输出**************************************
+//            uart1.printf("%04d\t%0.4f\t%0.4f\r\n",val_ch2,S_voltage_ch2,ambient_temperature_ch4);     
 //            uart1.printf("%04d\t%0.4f\t%0.4f\r\n",val_ch4,LM35_voltage_ch4,ambient_temperature_ch4);    
 //          uart1.printf("%04d\r\t %4.3f\r\n",val_ch3,flue_temperature_ch3);               
 //            uart1.printf("I_voltage_ch1 = %4.3f\t S_voltage_ch2 = %4.3f\t K_voltage_ch3 = %4.3f\t LM35_voltage_ch4 = %4.1f\r\n",I_voltage_ch1,S_voltage_ch2,K_voltage_ch3,LM35_voltage_ch4);
 ////          uart1.printf("detector_urrent_ch1 = %4.3f\r\n detector_temperature_ch2 = %4.3f\r\n flue_temperature_ch3 = %4.3f\r\n ambient_temperature_ch4 = %4.1f\r\n",detector_urrent_ch1,detector_temperature_ch2,flue_temperature_ch3,ambient_temperature_ch4);
 //          uart1.printf("voltage_ch1 = %4.3f\r\n voltage_ch2 = %4.3f\r\n voltage_ch3 = %4.3f\r\n voltage_ch4 = %4.1f\r\n",voltage_ch1,voltage_ch2,voltage_ch3,voltage_ch4);
 //            _485_rx_mode();
+//**************校准使用输出字符串，用于校准S等热电偶参数输出**************************************
             LED0.toggle();//串口发送状态指示灯，D4
-//                 PA1.toggle();   //测试口               
+//  
+               PA1.toggle();   //测试口     
+               
         }
 //          delay_ms(1000);             
     }
