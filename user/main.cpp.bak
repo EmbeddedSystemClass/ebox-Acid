@@ -3,14 +3,16 @@
   * @file   : *.cpp
   * @author : shentq
   * @version: V1.2
-  * @date   : 2017/09/17
+  * @date   : 2018/06/11
 
   * @brief   ebox application example .
   *
   * Copyright 2016 shentq. All Rights Reserved.         
   ******************************************************************************
  */
-
+/**
+2018.6.11增加备注
+**/
 
 #include "ebox.h"
 #include "ads7816.h"
@@ -341,9 +343,9 @@ uint8_t make_frame(float ch1,float ch2,float ch3,float ch4)
     return j;
 }
 ////////////////////////////////////////////////////////////////////////////////
+/*温度计算公式，电压查表转换为温度
 
-
-//////////////////////
+//////////////////////*/
 int32_t voltage_to_temperature(float voltage,float ref,const float *table)
 {
     //k_600_table[temp] = (k_600_table[ref] + voltage)
@@ -460,7 +462,7 @@ void setup()
     flash.read(0x800E070,ch4_off.byte,16);
     flash.read(0x800E080,ch5_ratio.byte,16);// Y = -264.12479 + 2.05554*X1   电流测试的低电流函数
     flash.read(0x800E090,ch5_off.byte,16);
-//*************输出线性计算函数************************************************//
+//*************输出线性计算函数***去掉注释可以看到线性拟合函数*********************************************//
 //    display((double*)data1,answer_ch1,&SquarePoor[0],12,2);
 //    display((double*)data2,answer_ch2,&SquarePoor[0],12,2);
 //    display((double*)data3,answer_ch3,&SquarePoor[0],14,2);
@@ -493,9 +495,12 @@ int main(void)
 //        detector_temperature_ch2 = voltage_ch2;//
 ////      flue_temperature_ch3 = voltage_ch3;//
 //        ambient_temperature_ch4 = voltage_ch4;//  
+/*
+        对电流检测进行两个函数分段处理，提高精度，需要改进电路降低噪声。就可以去除本部分
+*/
         if(val_ch1 >= 159 )
         {
-            I_voltage_ch1 = ch1_off.val + ch1_ratio.val*val_ch1;
+            I_voltage_ch1 = ch1_off.val + ch1_ratio.val*val_ch1;//对电流检测进行分段处理
         }
         else if ((val_ch1 < 159)&(val_ch1 > 131))
         {
@@ -526,19 +531,23 @@ int main(void)
            int32_t temp1 = voltage_to_temperature(K_voltage_ch3,LM35_voltage_ch4,k_600_table);
            int32_t temp2 = voltage_to_temperature(S_voltage_ch2,LM35_voltage_ch4,s_300_table);
          //  temp2 = temp2 - 3 ;//修正温度校准误差
-//           LM35_voltage_ch4 = LM35_voltage_ch4 /10.0;
-//uart1.printf("temp1:%d\ttemp2:%d\tvoltage:%0.2f\r\n",temp1,temp2,K_voltage_ch3);
- //485发送数据方式   
- //测试程序
-//           uart1.printf("I_voltage_ch1 = %4.3f\t S_voltage_ch2 = %4.3f\t K_voltage_ch3 = %4.3f\t LM35_voltage_ch4 = %4.1f\r\n",I_voltage_ch1,S_voltage_ch2,K_voltage_ch3,LM35_voltage_ch4); 
+         //uart1.printf("temp1:%d\ttemp2:%d\tvoltage:%0.2f\r\n",temp1,temp2,K_voltage_ch3);//校准温度用来观看数据使用
 
+/***************************调试程序********************************************************/
+/* 2018.6.11串口测试程序，去除备注既可以调试模拟板至上位机观察原始数据*/
+/****************************调试程序******************************************************/
+        LM35_voltage_ch4 = LM35_voltage_ch4 /10.0;
+        S_voltage_ch2 = temp2;
+        K_voltage_ch3 = temp1;
+        uart1.printf("I_voltage_ch1 = %4.3f\t S_voltage_ch2 = %4.3f\t K_voltage_ch3 = %4.3f\t LM35_voltage_ch4 = %4.1f\r\n",I_voltage_ch1,S_voltage_ch2,K_voltage_ch3,LM35_voltage_ch4); 
+/****************************调试程序******************************************************/
+            
+            
 //**************最终上位机485通信程序**********************************
             uint8_t len = make_frame(I_voltage_ch1,temp2,temp1,LM35_voltage_ch4);
             uart1.write(send_buf,len);
 //*******************最终上位机485通信程序  ********************************************               
-                 PA1.toggle();   //测试口 
-
-                 
+            PA1.toggle();   //测试口                 
 //**************校准使用输出字符串，用于校准S等热电偶参数输出**************************************
 //            uart1.printf("%04d\t%0.4f\t%0.4f\r\n",val_ch2,S_voltage_ch2,ambient_temperature_ch4);     
 //            uart1.printf("%04d\t%0.4f\t%0.4f\r\n",val_ch4,LM35_voltage_ch4,ambient_temperature_ch4);    
@@ -549,8 +558,7 @@ int main(void)
 //            _485_rx_mode();
 //**************校准使用输出字符串，用于校准S等热电偶参数输出**************************************
             LED0.toggle();//串口发送状态指示灯，D4
-//  
-               PA1.toggle();   //测试口     
+            PA1.toggle();   //测试口     
                
         }
 //          delay_ms(1000);             
@@ -572,7 +580,7 @@ void _485_rx_mode()
 //通道模拟开关选择
 void adc_read_ch(uint8_t ch)
 {
-    LED1.toggle();//ADC采甲刺指示灯
+    LED1.toggle();//ADC采甲刺指示灯，采样率由模拟开关切换速率决定
    
     switch(ch)
     {
